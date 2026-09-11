@@ -274,7 +274,14 @@
                 showToast("ログインに成功しました", "success");
             } catch (error) {
                 console.error("Login failed:", error);
-                showToast("ログインに失敗しました: " + error.message, "error");
+                // ユーザーが自発的にポップアップを閉じた場合はエラー表示をスキップ
+                if (error.code === 'auth/popup-closed-by-user') {
+                    showToast("ログインがキャンセルされました", "info");
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    showToast("Firebaseの承認済みドメインにこのURLが追加されていません", "error");
+                } else {
+                    showToast("ログインに失敗しました: " + error.message, "error");
+                }
             }
         };
 
@@ -435,8 +442,15 @@
         }, (error) => {
             console.error("Firestore Read Error:", error);
             feedbackList.innerHTML = `
-                <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs text-center">
-                    データの取得に失敗しました。<br>Firestoreのセキュリティルールをご確認ください。
+                <div class="bg-amber-50 border border-amber-300 text-amber-800 p-5 rounded-xl text-xs space-y-2 shadow-sm">
+                    <p class="font-bold flex items-center justify-center space-x-1.5 text-sm text-amber-900">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+                        <span>Firestore セキュリティルールの設定が必要です</span>
+                    </p>
+                    <p class="leading-relaxed">
+                        データ読み込みの権限がありません。<br>
+                        Firebase Console の <strong>Firestore Database > ルール</strong> で閲覧許可（<code>allow read: if true;</code>）を設定してください。
+                    </p>
                 </div>
             `;
         });
